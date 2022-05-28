@@ -399,19 +399,12 @@ void addbinding(int keycode, int mods, char *commands) {
         newrecordingpath = strdup(path);
       }
 
-      /* Fail if we try to set the record file to another name than we set
-       * previously */
-      if (recordings_filename != NULL
-          && strcmp(recordings_filename, newrecordingpath)) {
-        free(newrecordingpath);
-        fprintf(stderr,
-                "Recordings file already set to '%s', you tried to\n"
-                "set it to '%s'. Keeping original value.\n",
-                recordings_filename, path);
-      } else {
-        recordings_filename = newrecordingpath;
-        parse_recordings(recordings_filename);
+      if (recordings_filename != NULL) {
+        free(recordings_filename);
       }
+      recordings_filename = newrecordingpath;
+      parse_recordings(recordings_filename);
+
     }
   } /* special config handling for 'record' */
 }
