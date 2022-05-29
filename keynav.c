@@ -55,6 +55,7 @@ struct appstate {
   enum { GRID_LABEL_NONE, GRID_LABEL_AA } grid_label;
   int grid_nav_col;
   int grid_nav_row;
+  int grid_max_iterations;
 };
 
 typedef enum { HANDLE_CONTINUE, HANDLE_STOP } handler_info_t;
@@ -148,6 +149,7 @@ void cmd_end(char *args);
 void cmd_toggle_start(char *args);
 void cmd_grid(char *args);
 void cmd_grid_nav(char *args);
+void cmd_grid_max_iterations(char *args);
 void cmd_history_back(char *args);
 void cmd_loadconfig(char *args);
 void cmd_move_down(char *args);
@@ -226,6 +228,8 @@ dispatch_t dispatch[] = {
     cmd_grid,
     "grid-nav",
     cmd_grid_nav,
+    "grid-max-iterations",
+    cmd_grid_max_iterations,
     "cell-select",
     cmd_cell_select,
 
@@ -952,6 +956,7 @@ void cmd_start(char *args) {
 
   appstate.grid_nav_row = -1;
   appstate.grid_nav_col = -1;
+  appstate.grid_max_iterations = -1;
 
   wininfo.x = viewports[wininfo.curviewport].x;
   wininfo.y = viewports[wininfo.curviewport].y;
@@ -1301,6 +1306,17 @@ void cmd_grid_nav(char *args) {
   appstate.need_draw = 1;
 }
 
+void cmd_grid_max_iterations(char *args) {
+  int grid_max_iter;
+
+  grid_max_iter = atoi(args);
+  if (grid_max_iter <= 0) {
+    fprintf(stderr, "Invalid grid-max-iterations integer: %d\n", grid_max_iter);
+    return;
+  }
+  appstate.grid_max_iterations = grid_max_iter;
+}
+
 void cmd_grid(char *args) {
   int grid_cols, grid_rows;
 
@@ -1635,6 +1651,7 @@ handler_info_t handle_recording(XKeyEvent *e) {
 
 handler_info_t handle_gridnav(XKeyEvent *e) {
   int index = 0;
+  int i;
 
   if (e->state & 0x2000) { /* ISO Level3 Shift */
     index += 2;
@@ -1678,6 +1695,27 @@ handler_info_t handle_gridnav(XKeyEvent *e) {
     save_history_point();
     appstate.grid_nav_row = -1;
     appstate.grid_nav_col = -1;
+
+    /* If grid_max_iterations is set, decrease it */
+    if (appstate.grid_max_iterations > -1) {
+      appstate.grid_max_iterations = appstate.grid_max_iterations - 1;
+    }
+    /* If grid_max_iterations is 0, stop grid and execute space (65) */
+    if (appstate.grid_max_iterations == 0) {
+      appstate.grid_max_iterations = -1;
+      cmd_grid_nav("off");
+      update();
+
+      /* Loop over known keybindings */
+      for (i = 0; i < keybindings->len; i++) {
+        keybinding_t *kbt = g_ptr_array_index(keybindings, i);
+        int keycode = kbt->keycode;
+        char *commands = kbt->commands;
+        if (keycode == 65) {
+          handle_commands(commands);
+        }
+      }
+    }
   } else if (appstate.grid_nav_state == GRID_NAV_ROW) {
     if (val >= wininfo.grid_rows) {
       return HANDLE_CONTINUE; /* Invalid key in this grid, pass */
