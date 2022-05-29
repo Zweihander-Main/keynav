@@ -1666,6 +1666,7 @@ handler_info_t handle_gridnav(XKeyEvent *e) {
   if (sym == XK_Escape) {
     cmd_grid_nav("off");
     update();
+    cmd_end(NULL);
     return HANDLE_STOP;
   }
 
