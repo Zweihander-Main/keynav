@@ -6,6 +6,18 @@ Control the mouse with the keyboard.
 Please see http://www.semicomplete.com/projects/keynav
 
 
+Fork
+----
+
+- Allow for overriding the record file location in config
+- Add `grid_max_iterations`. Will allow for workflow start -> 1 grid selection -> `space` command. For example, to start grid with `super+semicolon`, then select one grid square, and then automatically execute warp and xmouseless:
+```
+super+semicolon start, grid-max-iterations 1, grid-nav on, grid 20x20
+space warp,sh "xmouseless",end
+```
+- Set program to exit when grid-nav is ended
+
+
 Compiling
 ---------
 
